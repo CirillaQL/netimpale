@@ -1,0 +1,22 @@
+syntax = "proto3";
+package login;
+
+message Login {
+  string uuid = 1;
+  string username = 2;
+  string password = 3;
+  bool if_encrypted = 4;
+  string client_addr = 5;
+  uint32 client_port = 6;
+  string server_addr = 7;
+  uint32 server_port = 8;
+}
+
+message LoginRequest{
+  Login login_info = 1;
+  string time = 2;
+}
+
+message LoginResponse{
+  string public_key = 1;
+}
