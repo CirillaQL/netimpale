@@ -1,7 +1,8 @@
 syntax = "proto3";
 package login;
+option go_package="./";
 
-message Login {
+message LoginInfo {
   string uuid = 1;
   string username = 2;
   string password = 3;
@@ -12,11 +13,17 @@ message Login {
   uint32 server_port = 8;
 }
 
-message LoginRequest{
-  Login login_info = 1;
+message LoginRequest {
+  LoginInfo login_info = 1;
   string time = 2;
 }
 
-message LoginResponse{
+message LoginResponse {
   string public_key = 1;
+  string time = 2;
+  bool result = 3;
+}
+
+service LoginService {
+  rpc Login(LoginRequest) returns (LoginResponse) {}
 }

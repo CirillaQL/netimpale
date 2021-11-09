@@ -1,8 +1,0 @@
-syntax = "proto3";
-package login;
-
-import "proto/login/Login.proto";
-
-service ClientLogin {
-  rpc ClientLogin(LoginRequest) returns (LoginResponse);
-}
