@@ -1,8 +1,9 @@
 package log
 
 import (
-	"fmt"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"os"
 )
 
 const (
@@ -12,9 +13,15 @@ const (
 var LOG *zap.SugaredLogger
 
 func init() {
-	_log, err := zap.NewProduction()
-	if err != nil {
-		_ = fmt.Errorf("Init ZapLogger failed, err: %v ", err)
-	}
+	writer := zapcore.AddSync(os.Stdout)
+	// 格式相关配置
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
+	encoder := zapcore.NewConsoleEncoder(encoderConfig)
+	core := zapcore.NewCore(encoder, writer, zapcore.DebugLevel)
+	_log := zap.New(core)
+	LOG = _log.Sugar()
 	LOG = _log.Sugar()
 }
