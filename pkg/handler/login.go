@@ -3,20 +3,25 @@ package handler
 import (
 	"context"
 	"fmt"
-	loginservice "netimpale/proto/login"
+	"netimpale/proto/login"
 	"netimpale/utils/log"
+	"time"
 )
 
-type LoginHandler struct{}
+var LOG = log.LOG
+
+type LoginHandler struct {
+	login.UnimplementedLoginServiceServer
+}
 
 func (l *LoginHandler) Login(ctx context.Context,
-	req *loginservice.LoginRequest) (*loginservice.LoginResponse, error) {
-	log.LOG.Debug("")
+	req *login.LoginRequest) (*login.LoginResponse, error) {
+	LOG.Infof("Client login %+v", req.LoginInfo)
 	loginInfo := req.GetLoginInfo()
 	fmt.Println(loginInfo)
-	return &loginservice.LoginResponse{
-		PublicKey: "",
-		Time:      "",
-		Result:    false,
+	return &login.LoginResponse{
+		PublicKey: "aaa",
+		Time:      time.Now().String(),
+		Result:    true,
 	}, nil
 }
