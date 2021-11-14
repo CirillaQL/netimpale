@@ -1,40 +1,30 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"google.golang.org/grpc"
-	login "netimpale/proto/login"
+	"net"
+	pb_login "netimpale/gRPC/login"
 	"netimpale/utils/log"
-	"time"
 )
 
 var LOG = log.LOG
 
 func main() {
 	fmt.Println("Hello, NetImpale!")
-	conn, err := grpc.Dial("119.28.77.233:23456", grpc.WithInsecure(), grpc.WithBlock())
+	//首先监听端口
+	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
-		LOG.Errorf("gRPC Start Failed: %+v", err)
+		LOG.Infof("listener err: %v", err)
 	}
-	defer conn.Close()
+	LOG.Infof(" net.Listing...")
+	// 实例化gRPC
+	grpcServer := grpc.NewServer()
+	pb_login.RegisterLoginServiceServer(grpcServer, &pb_login.LoginServer{})
 
-	c := login.NewLoginServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	a := login.LoginInfo{
-		Uuid:        "aaaaa",
-		Username:    "pp",
-		Password:    "aaa",
-		IfEncrypted: false,
-		ClientAddr:  "ssss",
-		ClientPort:  0,
-		ServerAddr:  "aaaaa",
-		ServerPort:  0,
+	//启动服务器
+	err = grpcServer.Serve(listener)
+	if err != nil {
+		LOG.Errorf("grpc server err: %v", err)
 	}
-	r, err := c.Login(ctx, &login.LoginRequest{
-		LoginInfo: &a,
-		Time:      time.Now().String(),
-	})
-	fmt.Println(r)
 }
