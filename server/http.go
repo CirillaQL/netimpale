@@ -9,6 +9,7 @@ type HTTPManager struct {
 	RunID string
 }
 
+// NewHTTPManager 创建HTTPManager
 func NewHTTPManager() *HTTPManager {
 	return &HTTPManager{}
 }
