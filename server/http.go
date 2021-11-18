@@ -14,6 +14,7 @@ func NewHTTPManager() *HTTPManager {
 	return &HTTPManager{}
 }
 
+// Run 运行
 func (http *HTTPManager) Run() {
 
 }
