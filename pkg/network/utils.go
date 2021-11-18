@@ -4,6 +4,7 @@ import (
 	"net"
 )
 
+// GetIPAddress 获取IP地址
 func GetIPAddress() (map[string]string, error) {
 	ips := make(map[string]string)
 	interfaces, err := net.Interfaces()
