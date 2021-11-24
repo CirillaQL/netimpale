@@ -2,11 +2,8 @@ package server
 
 import (
 	"net"
-	"netimpale/utils/log"
 	"time"
 )
-
-var LOG = log.LOG
 
 // HTTPManager Http连接的管理结构体，目前用来处理Http连接的相关请求
 type HTTPManager struct {

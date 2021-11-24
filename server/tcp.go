@@ -2,11 +2,8 @@ package server
 
 import (
 	"net"
-	"netimpale/utils/log"
 	"time"
 )
-
-var LOG = log.LOG
 
 // TCPManager Http连接的管理结构体，目前用来处理Http连接的相关请求
 type TCPManager struct {
@@ -27,7 +24,7 @@ type TCPConn struct {
 
 // NewTCPManager 创建HTTPManager
 func NewTCPManager() *HTTPManager {
-
+	LOG.Infof("Create TCPManager")
 	return &HTTPManager{}
 }
 
