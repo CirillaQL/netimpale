@@ -1,6 +1,8 @@
 package server
 
-import "netimpale/utils/log"
+import (
+	"netimpale/utils/log"
+)
 
 var LOG = log.LOG
 

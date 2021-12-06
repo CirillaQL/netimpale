@@ -2,38 +2,47 @@ package server
 
 import (
 	"net"
-	"time"
 )
 
 // TCPManager Http连接的管理结构体，目前用来处理Http连接的相关请求
 type TCPManager struct {
-	RunID    string
-	Conns    []*TCPConn
-	Listener net.Listener
-}
-
-// TCPConn 针对HTTP的Conn,添加相关的支持
-type TCPConn struct {
-	ConnID string
-	Token  string
-	Conn   *net.Conn
-	Data   []byte
-	Status uint32
-	Time   time.Time
+	TCPAddr     *net.TCPAddr
+	TCPListener *net.TCPListener
 }
 
 // NewTCPManager 创建HTTPManager
-func NewTCPManager() *HTTPManager {
+func NewTCPManager(network, addr string) *TCPManager {
 	LOG.Infof("Create TCPManager")
-	return &HTTPManager{}
-}
-
-// ConnHandler 针对连接进行处理的Handler
-func (tcp *TCPManager) ConnHandler(conn net.Conn) {
-
+	tcpAddr, err := net.ResolveTCPAddr(network, addr)
+	if err != nil {
+		LOG.Errorf("Create TCPManger TCPAddr Failed: %v", err)
+	}
+	tcpListener, err := net.ListenTCP(network, tcpAddr)
+	if err != nil {
+		LOG.Errorf("Create TCPManger TCPListener Failed: %v", err)
+	}
+	return &TCPManager{
+		TCPAddr:     tcpAddr,
+		TCPListener: tcpListener,
+	}
 }
 
 // Run 运行
 func (tcp *TCPManager) Run() {
+	if tcp.TCPAddr == nil || tcp.TCPListener == nil {
+		LOG.Errorf("TCPManager Init Failed.")
+	}
+	LOG.Infof("TCPManager Run...")
+	for {
+		conn, err := tcp.TCPListener.AcceptTCP()
+		if err != nil {
+			LOG.Infof("Accept TCP Conn Failed, Error: %v", err)
+		}
+		go tcp.ConnHandler(conn)
+	}
+}
+
+// ConnHandler 处理来的TCPConn连接
+func (tcp *TCPManager) ConnHandler(conn *net.TCPConn) {
 
 }
