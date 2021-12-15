@@ -1,9 +1,7 @@
 package server
 
 import (
-	"io"
 	"net"
-	"sync"
 )
 
 // TCPManager Http连接的管理结构体，目前用来处理Http连接的相关请求
@@ -12,6 +10,9 @@ type TCPManager struct {
 	TCPServerListener *net.TCPListener
 	TCPClientAddr     *net.TCPAddr
 	TCPClientListener *net.TCPListener
+
+	serverChan chan *net.TCPConn
+	clientChan chan *net.TCPConn
 }
 
 // NewTCPManager 创建HTTPManager
@@ -33,11 +34,27 @@ func NewTCPManager(network, ServerAddr, ClientAddr string) *TCPManager {
 	if err != nil {
 		LOG.Errorf("Create TCPManager TCPClientListener Failed: %v", err)
 	}
+	serverChan := make(chan *net.TCPConn)
+	clientChan := make(chan *net.TCPConn)
 	return &TCPManager{
 		TCPServerAddr:     tcpServerAddr,
 		TCPServerListener: tcpServerListener,
 		TCPClientAddr:     tcpClientAddr,
 		TCPClientListener: tcpClientListener,
+
+		serverChan: serverChan,
+		clientChan: clientChan,
+	}
+}
+
+// handleConn 获取TCPConnect连接，并将其置于对应的
+func (tcp *TCPManager) handlerTCPConn(ch chan *net.TCPConn, listener *net.TCPListener) {
+	for {
+		conn, err := (*listener).AcceptTCP()
+		if err != nil {
+			LOG.Errorf("TCPManager Can't Handle Connect: %v", err)
+		}
+		ch <- conn
 	}
 }
 
@@ -50,18 +67,11 @@ func (tcp *TCPManager) Run() {
 		LOG.Errorf("TCPManager Client Init Failed.")
 	}
 	LOG.Infof("TCPManager Run...")
-	// 首先应该监控与客户端的TCP连接是否已经建立，否则无法接受外界的TCP的连接
-	for {
-		wg := &sync.WaitGroup{}
-		conn, err := tcp.TCPServerListener.AcceptTCP()
-		if err != nil {
-			LOG.Infof("Accept TCP Conn Failed, Error: %v", err)
-		}
-		go tcp.ConnHandler(conn)
-	}
+	// 将conn写入对应的channel中
+	go tcp.handlerTCPConn(tcp.serverChan, tcp.TCPServerListener)
+	go tcp.handlerTCPConn(tcp.clientChan, tcp.TCPClientListener)
 }
 
-// ConnHandler 处理来的TCPConn连接
-func (tcp *TCPManager) ConnHandler(conn *net.TCPConn) {
-	io.Copy()
+func (tcp *TCPManager) Proxy() {
+
 }
