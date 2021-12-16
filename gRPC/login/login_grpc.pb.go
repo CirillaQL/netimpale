@@ -86,7 +86,7 @@ func _LoginService_Login_Handler(srv interface{}, ctx context.Context, dec func(
 
 // LoginService_ServiceDesc is the grpc.ServiceDesc for LoginService service.
 // It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
+// and not to be introspected or modified (even as a proxyIO)
 var LoginService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "login_proto.LoginService",
 	HandlerType: (*LoginServiceServer)(nil),
