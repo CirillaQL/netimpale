@@ -30,6 +30,7 @@ func NewTCPProxy(network, serverAddr string) *TCPProxy {
 	return &TCPProxy{
 		serverAddr:     tcpAddr,
 		serverListener: tcpListener,
+		connCh:         make(chan *net.TCPConn),
 	}
 }
 
@@ -40,26 +41,31 @@ func (proxy *TCPProxy) StartListener() {
 		if err != nil {
 			LOG.Errorf("TCPProxy Can't Handle Connect: %v", err)
 		}
-		proxy.connCh <- remoteConn
+		go func(ch chan *net.TCPConn, Conn *net.TCPConn) {
+			ch <- Conn
+		}(proxy.connCh, remoteConn)
 	}
 }
 
 // HandleTCPConnection 远程连接并转发
-func (proxy *TCPProxy) HandleTCPConnection(clientConn *net.TCPConn) {
-	serverConn := <-proxy.connCh
-	go func(serverConn, clientConn *net.TCPConn) {
-		proxyReq, err := io.Copy(serverConn, clientConn)
-		if err != nil {
-			LOG.Errorf("Can't Proxy TCP Connect from remote")
-		}
-		LOG.Infof("Proxy TCP Data Size: %d", proxyReq)
-	}(serverConn, clientConn)
-	go func(serverConn, clientConn *net.TCPConn) {
-		proxyRsp, err := io.Copy(clientConn, serverConn)
-		if err != nil {
-			LOG.Errorf("Can't Proxy TCP Connect from remote")
-		}
-		LOG.Infof("Proxy TCP Data Size: %d", proxyRsp)
-	}(serverConn, clientConn)
-
+func (proxy *TCPProxy) HandleTCPConnection(clientCh chan *net.TCPConn) {
+	for {
+		serverConn := <-proxy.connCh
+		clientConn := <-clientCh
+		LOG.Infof("Now TCP Get Both Conn")
+		go func(serverConn, clientConn *net.TCPConn) {
+			proxyReq, err := io.Copy(serverConn, clientConn)
+			if err != nil {
+				LOG.Error("Can't Proxy TCP Connect from remote")
+			}
+			LOG.Infof("Proxy TCP Data Size: %d", proxyReq)
+		}(serverConn, clientConn)
+		go func(serverConn, clientConn *net.TCPConn) {
+			proxyRsp, err := io.Copy(clientConn, serverConn)
+			if err != nil {
+				LOG.Error("Can't Proxy TCP Connect from remote")
+			}
+			LOG.Infof("Proxy TCP Data Size: %d", proxyRsp)
+		}(serverConn, clientConn)
+	}
 }

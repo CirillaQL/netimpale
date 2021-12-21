@@ -30,6 +30,7 @@ func NewTCPManager(network, ServerAddr, ClientAddr string) *TCPManager {
 		proxy:          tcpProxy,
 		clientAddr:     tcpAddr,
 		clientListener: tcpListener,
+		clientCh:       make(chan *net.TCPConn),
 	}
 }
 
@@ -40,7 +41,9 @@ func (tcp *TCPManager) ConnectClient() {
 		if err != nil {
 			LOG.Errorf("TCPProxy Can't Handle Connect: %v", err)
 		}
-		tcp.clientCh <- remoteConn
+		go func(ch chan *net.TCPConn, Conn *net.TCPConn) {
+			ch <- Conn
+		}(tcp.clientCh, remoteConn)
 	}
 }
 
@@ -50,8 +53,5 @@ func (tcp *TCPManager) Run() {
 	go tcp.proxy.StartListener()
 	//此时需获取来自客户端的net.TCPConn
 	go tcp.ConnectClient()
-	for {
-		clientConn := <-tcp.clientCh
-		go tcp.proxy.HandleTCPConnection(clientConn)
-	}
+	go tcp.proxy.HandleTCPConnection(tcp.clientCh)
 }
