@@ -5,7 +5,7 @@ import (
 	"netimpale/server/proxy"
 )
 
-// TCPManager Http连接的管理结构体，目前用来处理Http连接的相关请求
+// TCPManager TCP连接的管理结构体，目前用来处理TCP连接的相关请求
 type TCPManager struct {
 	proxy          *proxy.TCPProxy
 	clientAddr     *net.TCPAddr
@@ -14,7 +14,7 @@ type TCPManager struct {
 	clientCh chan *net.TCPConn
 }
 
-// NewTCPManager 创建HTTPManager
+// NewTCPManager 创建TCPManager
 func NewTCPManager(network, ServerAddr, ClientAddr string) *TCPManager {
 	LOG.Infof("Create TCPManager")
 	tcpProxy := proxy.NewTCPProxy(network, ServerAddr)

@@ -1,8 +1,13 @@
-package network
+package network_utils
 
 import (
 	"net"
+	"netimpale/utils/log"
+	"strconv"
+	"strings"
 )
+
+var LOG = log.LOG
 
 // GetIPAddress 获取IP地址
 func GetIPAddress() (map[string]string, error) {
@@ -20,4 +25,13 @@ func GetIPAddress() (map[string]string, error) {
 		ips[i.Name] = ipv4_address
 	}
 	return ips, nil
+}
+
+func ParseIPv4(address string) (string, int) {
+	IPandPort := strings.Split(address, ":")
+	port, err := strconv.Atoi(IPandPort[1])
+	if err != nil {
+		LOG.Errorf("Parse IPv4 Address Failed: %v", err)
+	}
+	return IPandPort[0], port
 }
