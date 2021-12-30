@@ -3,6 +3,7 @@ package server
 import (
 	"net"
 	"netimpale/server/proxy"
+	"time"
 )
 
 // TCPManager TCP连接的管理结构体，目前用来处理TCP连接的相关请求
@@ -38,6 +39,14 @@ func NewTCPManager(network, ServerAddr, ClientAddr string) *TCPManager {
 func (tcp *TCPManager) ConnectClient() {
 	for {
 		remoteConn, err := tcp.clientListener.AcceptTCP()
+		if err != nil {
+			LOG.Errorf("TCPProxy Can't Handle Connect: %v", err)
+		}
+		err = remoteConn.SetKeepAlive(true)
+		if err != nil {
+			LOG.Errorf("TCPProxy Can't Handle Connect: %v", err)
+		}
+		err = remoteConn.SetKeepAlivePeriod(2 * time.Second)
 		if err != nil {
 			LOG.Errorf("TCPProxy Can't Handle Connect: %v", err)
 		}
