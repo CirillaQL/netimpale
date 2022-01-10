@@ -2,29 +2,53 @@ package main
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
-	"net"
-	pb_login "netimpale/gRPC/login"
+	"io/ioutil"
 	"netimpale/utils/log"
+	myyaml "netimpale/utils/yaml"
+
+	"gopkg.in/yaml.v3"
 )
 
 var LOG = log.LOG
 
 func main() {
-	fmt.Println("Hello, NetImpale!")
-	//首先监听端口
-	listener, err := net.Listen("tcp", "127.0.0.1:8080")
+	// 创建 listener
+	//listener, err := net.Listen("tcp", "localhost:9090")
+	//if err != nil {
+	//	fmt.Println("Error listening", err.Error())
+	//	return //终止程序
+	//}
+	//// 监听并接受来自客户端的连接
+	//for {
+	//	conn, err := listener.Accept()
+	//	if err != nil {
+	//		fmt.Println("Error accepting", err.Error())
+	//		return // 终止程序
+	//	}
+	//	go doServerStuff(conn)
+	//}
+	conf := new(myyaml.Client)
+	yamlFile, err := ioutil.ReadFile("./assets/client.yaml")
 	if err != nil {
-		LOG.Infof("listener err: %v", err)
+		LOG.Errorf("%v", err)
 	}
-	LOG.Infof(" net.Listing...")
-	// 实例化gRPC
-	grpcServer := grpc.NewServer()
-	pb_login.RegisterLoginServiceServer(grpcServer, &pb_login.LoginServer{})
-
-	//启动服务器
-	err = grpcServer.Serve(listener)
+	err = yaml.Unmarshal(yamlFile, conf)
 	if err != nil {
-		LOG.Errorf("grpc server err: %v", err)
+		LOG.Errorf("%v", err)
 	}
+	fmt.Println(conf.TCP.Host)
+	fmt.Printf("%v", conf)
 }
+
+//func doServerStuff(conn net.Conn) {
+//	for {
+//		buf := make([]byte, 512)
+//		len, err := conn.Read(buf)
+//		if err != nil {
+//			fmt.Println("Error reading", err.Error())
+//			return //终止程序
+//		}
+//		//fmt.Printf("%v", string(buf[:len]))
+//		network_utils.GenerateHTTPRequest(buf, len)
+//	}
+//}
