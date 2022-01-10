@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"netimpale/utils/config"
 	"netimpale/utils/log"
-	myyaml "netimpale/utils/yaml"
 
 	"gopkg.in/yaml.v3"
 )
@@ -27,7 +27,7 @@ func main() {
 	//	}
 	//	go doServerStuff(conn)
 	//}
-	conf := new(myyaml.Client)
+	conf := new(config.Client)
 	yamlFile, err := ioutil.ReadFile("./assets/client.yaml")
 	if err != nil {
 		LOG.Errorf("%v", err)
