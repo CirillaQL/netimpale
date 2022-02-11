@@ -7,10 +7,11 @@ package connection
 
 import (
 	"context"
-	"github.com/satori/go.uuid"
 	"net"
 	"netimpale/utils/log"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 var LOG = log.LOG
@@ -20,26 +21,27 @@ type Conn struct {
 	TCPConn   *net.TCPConn       //具体连接的TCPConn实例
 	Ctx       context.Context    //添加操作Context
 	CtxCancel context.CancelFunc //ctx结束通知
-	err       error
 }
 
 // NewConn 创建连接时客户端向服务端发起创建连接
 func NewConn(serverAddr string) (c *Conn, err error) {
 	// 初始化连接
 	c = &Conn{
-		ID:  uuid.Must(uuid.NewV4(), nil).String(),
-		err: nil,
+		ID: uuid.Must(uuid.NewV4(), nil).String(),
 	}
 	// 拨号
 	var conn net.Conn
 	if conn, err = net.DialTimeout("tcp", serverAddr, 5*time.Second); err != nil {
-		// TODO：Support config dialTimeout time
+		// TODO：支持后续可以针对建立连接时的Timeout进行设置
 		LOG.Errorf("Create Conn Failed. Failed to Connect: %v", err)
+		return nil, err
 	} else {
 		c.TCPConn = conn.(*net.TCPConn)
+		LOG.Infof("Now Client connect to Server success, Conn ID: %s", c.ID)
 	}
 	if err = c.TCPConn.SetKeepAlive(true); err != nil {
 		LOG.Errorf("Conn Set KeepAlive Failed. Error: %v", err)
+		return nil, err
 	}
 	c.Ctx, c.CtxCancel = context.WithCancel(context.Background())
 	return c, nil
