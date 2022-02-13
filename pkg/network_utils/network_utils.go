@@ -1,8 +1,6 @@
 package network_utils
 
 import (
-	"bufio"
-	"fmt"
 	"net"
 	"netimpale/utils/log"
 	"strconv"
@@ -36,23 +34,4 @@ func ParseIPv4(address string) (string, int) {
 		LOG.Errorf("Parse IPv4 Address Failed: %v", err)
 	}
 	return IPandPort[0], port
-}
-
-func SplitLines(s string) []string {
-	var lines []string
-	sc := bufio.NewScanner(strings.NewReader(s))
-	for sc.Scan() {
-		lines = append(lines, sc.Text())
-	}
-	return lines
-}
-
-func GenerateHTTPRequest(httpInfo []byte, size int) {
-	info := string(httpInfo[:size])
-	fmt.Println(info)
-	fmt.Println("----------------------------------------------------")
-	ans := SplitLines(info)
-	for _, i := range ans {
-		fmt.Println(i)
-	}
 }
