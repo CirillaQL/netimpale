@@ -148,7 +148,6 @@ func (p *Pool) Listen() {
 	for i := 0; i < int(p.size); i++ {
 		conn := p.connectPool[i]
 		go conn.Handle(p.msgChan)
-<<<<<<< HEAD
 	}
 }
 
