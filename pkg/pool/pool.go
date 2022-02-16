@@ -6,38 +6,40 @@
 package pool
 
 import (
-	"container/list"
 	"context"
 	"fmt"
-	uuid "github.com/satori/go.uuid"
 	"net"
 	Connect "netimpale/pkg/connection"
 	"netimpale/utils/log"
 	"sync"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 var LOG = log.LOG
 
 // Pool 连接池
 type Pool struct {
-	connectPool *list.List  //连接池，数据结构为双向链表
-	actives     uint8       //当前的连接数
-	mutex       *sync.Mutex //同步锁
-	cond        *sync.Cond  //阻塞唤醒
+	connectPool []Connect.Conn //连接池，数据结构为Slice
+	size        uint8          //连接池指定大小
+	actives     uint8          //当前的连接数
+	mutex       *sync.Mutex    //同步锁
+	cond        *sync.Cond     //阻塞唤醒
+	msgChan     chan []byte    //消息队列（初步）
 }
 
 // NewClientPool 在客户端侧初始化连接，主动向服务端发送连接请求
-func NewClientPool() (p *Pool, err error) {
+func NewClientPool(size uint8) (p *Pool, err error) {
 	var failedTime uint8
-	_list := list.New()
-	for i := 0; i < 5; i++ {
+	poolSlice := make([]Connect.Conn, size)
+	for i := 0; i < int(size); i++ {
 		conn, err := Connect.NewConn("127.0.0.1:8080")
 		if err == nil {
 			if failedTime != 0 {
 				failedTime = 0
 			}
-			_list.PushBack(conn)
+			poolSlice = append(poolSlice, *conn)
 		} else {
 			if failedTime == 5 {
 				LOG.Errorf("Connect to Server failed.")
@@ -51,19 +53,21 @@ func NewClientPool() (p *Pool, err error) {
 	}
 	mutex := new(sync.Mutex)
 	cond := sync.NewCond(mutex)
-
+	msgChan := make(chan []byte)
 	p = &Pool{
-		_list,
-		uint8(_list.Len()),
+		poolSlice,
+		size,
+		uint8(len(poolSlice)),
 		mutex,
 		cond,
+		msgChan,
 	}
 	return p, nil
 }
 
 // NewServerPool 在服务端侧初始化连接，等待从客户端发来的连接请求
-func NewServerPool() (p *Pool, err error) {
-	_list := list.New()
+func NewServerPool(size uint8) (p *Pool, err error) {
+	poolSlice := make([]Connect.Conn, size)
 	_size := 0
 	listener, err := net.Listen("tcp", "localhost:50000")
 	if err != nil {
@@ -73,7 +77,8 @@ func NewServerPool() (p *Pool, err error) {
 	mutex := new(sync.Mutex)
 	cond := sync.NewCond(mutex)
 	p = &Pool{
-		connectPool: _list,
+		connectPool: poolSlice,
+		size:        size,
 		actives:     0,
 		mutex:       mutex,
 		cond:        cond,
@@ -84,7 +89,7 @@ func NewServerPool() (p *Pool, err error) {
 			fmt.Println("Error accepting", err.Error())
 			return nil, err // 终止程序
 		}
-		if _size == 5 || p.actives == 5 {
+		if _size == int(size) || p.actives == size {
 			LOG.Infof("Now Server get %d connect in pool.", _size)
 			return p, nil
 		}
@@ -95,7 +100,7 @@ func NewServerPool() (p *Pool, err error) {
 		}
 		connect.Ctx, connect.CtxCancel = context.WithCancel(context.Background())
 		//将其保存到链表(连接池)中
-		_list.PushBack(connect)
+		poolSlice = append(poolSlice, *connect)
 		_size++
 		p.actives++
 	}
@@ -108,13 +113,15 @@ func (p *Pool) Get() (conn *Connect.Conn, err error) {
 	defer p.mutex.Unlock()
 
 	//判断当前连接池中连接个数
-	if p.actives == 0 || p.connectPool.Len() == 0 {
+	if p.actives == 0 || len(p.connectPool) == 0 {
 		LOG.Error("Now ConnectionPool is Empty. Can't get Connection.")
 		return nil, nil
 	}
 
-	conn = p.connectPool.Remove(p.connectPool.Front()).(*Connect.Conn)
+	// conn = p.connectPool.Remove(p.connectPool.Front()).(*Connect.Conn)
+	conn = &p.connectPool[0]
 	p.actives--
+	p.connectPool = p.connectPool[1:]
 	return conn, nil
 }
 
@@ -129,8 +136,14 @@ func (p *Pool) Put(conn *Connect.Conn) {
 		//此时连接池已经满了
 		LOG.Infof("Pool is Full, Can't put conn {%s} in Pool", conn.ID)
 	} else {
-		p.connectPool.PushBack(conn)
+		p.connectPool = append(p.connectPool, *conn)
 		p.actives++
 	}
+}
 
+// Listen 开始监听连接池中所有连接，将消息存入队列中
+func (p *Pool) Listen() {
+	for i := 0; i < int(p.size); i++ {
+
+	}
 }

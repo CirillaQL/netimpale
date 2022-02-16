@@ -46,3 +46,8 @@ func NewConn(serverAddr string) (c *Conn, err error) {
 	c.Ctx, c.CtxCancel = context.WithCancel(context.Background())
 	return c, nil
 }
+
+// Listen 当连接建立后，调用Listen方法可以
+func (c *Conn) Listen(msgChan *chan []byte) {
+
+}
