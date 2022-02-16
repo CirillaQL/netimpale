@@ -19,6 +19,8 @@ import (
 
 var LOG = log.LOG
 
+type handler func([]byte) interface{}
+
 // Pool 连接池
 type Pool struct {
 	connectPool []Connect.Conn //连接池，数据结构为Slice
@@ -144,6 +146,17 @@ func (p *Pool) Put(conn *Connect.Conn) {
 // Listen 开始监听连接池中所有连接，将消息存入队列中
 func (p *Pool) Listen() {
 	for i := 0; i < int(p.size); i++ {
+		conn := p.connectPool[i]
+		go conn.Handle(p.msgChan)
+	}
+}
 
+// Handle 传入一个函数，从channel里读取消息并处理
+func (p *Pool) Handle(f handler) {
+	for {
+		select {
+		case value := <-p.msgChan:
+			f(value)
+		}
 	}
 }

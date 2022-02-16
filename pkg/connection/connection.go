@@ -6,6 +6,7 @@
 package connection
 
 import (
+	"bufio"
 	"context"
 	"net"
 	"netimpale/utils/log"
@@ -48,6 +49,16 @@ func NewConn(serverAddr string) (c *Conn, err error) {
 }
 
 // Listen 当连接建立后，调用Listen方法可以
-func (c *Conn) Listen(msgChan *chan []byte) {
-
+func (c *Conn) Handle(msgChan chan []byte) {
+	for {
+		reader := bufio.NewReader(c.TCPConn)
+		var buf [8192]byte
+		n, err := reader.Read(buf[:])
+		if err != nil {
+			LOG.Errorf("Conn: %s read data failed. Error: %+v", c.ID, err)
+			break
+		}
+		recvinfo := buf[:n]
+		msgChan <- recvinfo
+	}
 }
