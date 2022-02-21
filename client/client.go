@@ -1,6 +1,8 @@
 package client
 
 import (
+	"io"
+	"net"
 	"netimpale/pkg/pool"
 	"netimpale/utils/log"
 )
@@ -21,4 +23,14 @@ func NewClient(size uint8) (c *Client, err error) {
 	}
 	c = &Client{Pool: _pool}
 	return c, nil
+}
+
+// TransTCP 转发TCP连接，实现穿透
+func (c *Client) TransTCP(remoteConn *net.TCPConn) {
+	poolConn, err := c.Pool.Get()
+	if err != nil {
+		LOG.Errorf("Get Conn from Pool Failed. Error: %v", err)
+	}
+	go io.Copy(poolConn.TCPConn, remoteConn)
+	go io.Copy(remoteConn, poolConn.TCPConn)
 }
