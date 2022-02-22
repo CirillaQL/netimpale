@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	"net"
 	"netimpale/pkg/pool"
 	"netimpale/utils/log"
@@ -24,7 +25,12 @@ func NewServer(size uint8) (s *Server, err error) {
 	return s, nil
 }
 
-//
-func TransTCP(remoteConn *net.TCPConn) {
-
+// TransTCP 转发TCP
+func (s *Server) TransTCP(remoteConn *net.TCPConn) {
+	poolConn, err := s.Pool.Get()
+	if err != nil {
+		LOG.Errorf("Get Conn from Pool Failed. Error: %v", err)
+	}
+	go io.Copy(poolConn.TCPConn, remoteConn)
+	go io.Copy(remoteConn, poolConn.TCPConn)
 }
