@@ -31,6 +31,16 @@ func (c *Client) TransTCP(remoteConn *net.TCPConn) {
 	if err != nil {
 		LOG.Errorf("Get Conn from Pool Failed. Error: %v", err)
 	}
-	go io.Copy(poolConn.TCPConn, remoteConn)
-	go io.Copy(remoteConn, poolConn.TCPConn)
+	go func() {
+		_, err := io.Copy(poolConn.TCPConn, remoteConn)
+		if err != nil {
+			LOG.Errorf("Handler Transport TCP failed. Error: %v", err)
+		}
+	}()
+	go func() {
+		_, err := io.Copy(remoteConn, poolConn.TCPConn)
+		if err != nil {
+			LOG.Errorf("Handler Transport TCP failed. Error: %v", err)
+		}
+	}()
 }
