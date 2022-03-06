@@ -62,24 +62,3 @@ func (c *Conn) Handle(msgChan chan []byte) {
 		msgChan <- recvinfo
 	}
 }
-
-// Handshaking 连接池判断存活
-func (c *Conn) Handshaking(conn *Conn) bool {
-	if c.TCPConn == nil {
-		LOG.Errorf("Conn ID:%s is closed", c.ID)
-	}
-	buf := make([]byte, 256)
-	c.TCPConn.Write([]byte("ping"))
-	for {
-		_size, err := c.TCPConn.Read(buf)
-		if err != nil {
-			LOG.Errorf("Conn {%s} Handshaking Failed. Error: %v", c.ID, err)
-		}
-		getData := string(buf[0:_size])
-		if getData == "pong" {
-			return true
-		} else {
-			return false
-		}
-	}
-}
